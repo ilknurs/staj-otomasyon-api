@@ -1,0 +1,20 @@
+### GET: Tüm Şirketleri Getir
+GET http://localhost:5000/api/companies
+Accept: application/json
+### GET: Tüm Öğrencileri Getir
+GET http://localhost:5000/api/students
+Accept: application/json
+
+### GET: Tüm Danışmanları Getir
+GET http://localhost:5000/api/advisors
+Accept: application/json
+
+### GET: Tüm Stajları Getir
+GET http://localhost:5000/api/internships
+Accept: application/json
+
+### GET: Tüm Kullanıcıları Getir
+GET http://localhost:5000/api/users
+Accept: application/json,
+
+
