@@ -11,24 +11,20 @@ exports.register = asyncHandler(async (req, res) => {
   });
 });
 
-exports.login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  console.log('LOGIN ATTEMPT:', { email, password }); // Debug
-  
-  const user = await userService.getUserByEmail(email);
-  console.log('USER FOUND:', user ? 'YES' : 'NO'); // Debug
-  
-  if (!user) {
-    res.status(401);
-    throw new Error('Kullanıcı bulunamadı');
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    console.log('🔍 LOGIN REQUEST:', { email, password });
+    
+    const result = await userService.login(email, password);
+    console.log('✅ LOGIN SUCCESS:', result);
+    
+    res.json(result);
+  } catch (error) {
+    console.log('❌ LOGIN ERROR:', error.message);
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message
+    });
   }
-  
-  console.log('PASSWORD HASH:', user.passwordHash); // Debug
-  const isMatch = await bcrypt.compare(password, user.passwordHash);
-  console.log('PASSWORD MATCH:', isMatch); // Debug
-  
-  if (!isMatch) {
-    res.status(401);
-    throw new Error('Şifre yanlış');
-  }
-  });
+};
