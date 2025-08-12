@@ -27,25 +27,41 @@ const app = express();
 
 // Global middleware
 app.use(express.json());
-app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+
+// CORS - Frontend bağlantısı için
+app.use(cors({
+  origin: 'http://localhost:3000', //frontend URL'si
+  credentials: true
+}));
+
 app.use(helmet());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/students', studentRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/supervisors', supervisorRoutes);
 app.use('/api/attendances', attendanceRoutes);
 app.use('/api/daily-logs', dailyLogRoutes);
 app.use('/api/internships', internshipRoutes);
 app.use('/api/evaluations', evaluationRoutes);
-app.use('/api/departments', departmentRoutes);
+app.use('/api/department', departmentRoutes);
 app.use('/api/notifications', notificationRoutes);
-
+app.use('/api/student', studentRoutes);  // Tekil student routes
+app.use('/api/students', studentRoutes); // Çoğul students routes (opsiyonel)
 
 app.use(errorHandler);
 
-module.exports = app;
+// Server'ı başlat
+const PORT = process.env.PORT || 5000;
 
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Sunucu çalışıyor: http://localhost:${PORT}`);
+    console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
+  });
+}
+
+module.exports = app;

@@ -13,11 +13,15 @@ app.use(cors({
 }));
 
 
+
+
 // Body parser
 app.use(express.json());
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+
+app.use('/api/student', require('./routes/studentRoutes'));
 
 // Hata yakalama middleware’leri vs.
 // ...
