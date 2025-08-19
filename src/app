@@ -31,7 +31,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS - Frontend bağlantısı için
 app.use(cors({
-  origin: 'https://staj-otomasyon-frontend.vercel.app', //frontend URL'si
+  origin: [
+    "http://localhost:3000",
+    "https://staj-otomasyon-frontend.vercel.app"
+  ],
   credentials: true
 }));
 
