@@ -1,70 +1,95 @@
 const Student = require('../models/Student');
+const InternshipRecord = require('../models/InternshipRecord');
+const Attendance  = require('../models/Attendance');
+const DailyLog    = require('../models/DailyLog');
+const PeriodStart = require('../models/PeriodStart');
+const EndPeriod   = require('../models/EndPeriod');
+const Preferences = require('../models/Preferences');
+const StudentInfo = require('../models/StudentInfo');
+
 
 class StudentService {
-  // Öğrenci bilgilerini getir
-  static async getStudentById(studentId) {
-    const student = await Student.findById(studentId)
-      .populate('user')
-      .lean();
-    if (!student) throw new Error('Öğrenci bulunamadı.');
-    
-    return {
-      tc_no: student.tcKimlikNo,
-      ad: student.user?.firstName || '',
-      soyad: student.user?.lastName || '',
-      universite: 'Belirtilmemiş',
-      bolum: student.department,
-      sinif: 'Belirtilmemiş',
-      staj_baslangic_tarihi: student.internshipStartDate,
-      staj_bitis_tarihi: student.internshipEndDate
-    };
-  }
-
-  // Dashboard istatistikleri
-  static async getStudentDashboardStats(studentId) {
-    const student = await Student.findById(studentId)
-      .populate('attendanceRecords')
-      .lean();
-    if (!student) throw new Error('Öğrenci bulunamadı.');
-
-    const totalDays = student.attendanceRecords.length;
-    const completedDays = student.attendanceRecords.filter(r => r.status === 'present').length;
-    const averageScore = student.attendanceRecords.reduce((acc, r) => acc + (r.score || 0), 0) / (totalDays || 1);
-    const attendanceRate = totalDays ? (completedDays * 100) / totalDays : 0;
-
-    return {
-      toplam_gun: totalDays,
-      tamamlanan_gun: completedDays,
-      ortalama_puan: Number(averageScore.toFixed(2)),
-      devam_orani: Number(attendanceRate.toFixed(2))
-    };
-  }
-
-  // Son aktiviteler
-  static async getRecentLogs(studentId, limit = 5) {
-    const student = await Student.findById(studentId)
-      .populate({
-        path: 'dailyLogs',
-        options: { sort: { date: -1 }, limit }
-      })
-      .lean();
-    if (!student) throw new Error('Öğrenci bulunamadı.');
-
-    return student.dailyLogs.map(log => ({
-      tarih: log.date,
-      aktivite: log.activity,
-      saat: log.hours
-    }));
-  }
-
-  // Kombine veri getir
+  // Dashboard verilerini getir
   static async getStudentDashboardData(studentId) {
-    const [studentInfo, dashboardStats, recentLogs] = await Promise.all([
-      this.getStudentById(studentId),
-      this.getStudentDashboardStats(studentId),
-      this.getRecentLogs(studentId)
-    ]);
-    return { studentInfo, dashboardStats, recentLogs };
+    try {
+      // Öğrenci temel bilgileri
+      const student = await Student.findById(studentId)
+        .select('name surname email department')
+        .lean();
+
+      if (!student) {
+        throw new Error('Öğrenci bulunamadı');
+      }
+
+      // Staj kayıtları
+      const internships = await InternshipRecord.find({ student: studentId })
+        .populate('company', 'name')
+        .lean();
+
+      // Devam (yoklama) bilgileri
+      const attendance = await Attendance.find({ student: studentId }).lean();
+
+      // Günlük staj defteri (loglar)
+      const dailyLogs = await DailyLogs.find({ student: studentId })
+        .sort({ date: -1 })
+        .limit(10) // son 10 günlük log
+        .lean();
+
+      // Dönem başlangıcı
+      const periodStart = await PeriodStart.findOne({ student: studentId }).lean();
+
+      // Dönem sonu raporu
+      const endPeriod = await EndPeriod.findOne({ student: studentId }).lean();
+
+      // Öğrenci tercihleri
+      const preferences = await Preferences.findOne({ student: studentId }).lean();
+
+      // Öğrenci ek bilgileri (adres, telefon, vs.)
+      const studentInfo = await StudentInfo.findOne({ student: studentId }).lean();
+
+      return {
+        student,
+        internships,
+        attendance,
+        dailyLogs,
+        periodStart,
+        endPeriod,
+        preferences,
+        studentInfo,
+      };
+    } catch (error) {
+      console.error('StudentService Error:', error);
+      throw error;
+    }
+  }
+
+  // Öğrenci güncelleme
+  static async updateStudent(studentId, updateData) {
+    return await Student.findByIdAndUpdate(studentId, updateData, { new: true });
+  }
+
+  // Öğrenci silme
+  static async deleteStudent(studentId) {
+    return await Student.findByIdAndDelete(studentId);
+  }
+
+  // Listeleme
+  static async getStudents(page = 1, limit = 10, search = '') {
+    const query = search ? { name: new RegExp(search, 'i') } : {};
+    const students = await Student.find(query)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+    const total = await Student.countDocuments(query);
+
+    return {
+      students,
+      pagination: {
+        page,
+        limit,
+        total,
+      },
+    };
   }
 }
 

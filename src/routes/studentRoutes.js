@@ -5,84 +5,131 @@ const StudentController = require('../controllers/studentController');
 const { verifyToken } = require('../middlewares/authMiddleware');
 const { authorizeRoles } = require('../middlewares/roleMiddleware');
 
+
+const PeriodStart = require("../models/PeriodStart");
+const EndPeriod = require("../models/EndPeriod");
+const Preferences = require("../models/Preferences");
+const StudentInfo = require("../models/StudentInfo");
+
+
+
+
+// === PERIOD START ===
+// Öğrenci kendi staj başlangıcını ekler
+router.post("/period-start", verifyToken, authorizeRoles("student"), async (req, res) => {
+  try {
+    const record = new PeriodStart({
+      student: req.user.id,
+      date: req.body.date,
+      note: req.body.note,
+    });
+    await record.save();
+    res.status(201).json({ success: true, data: record });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// === END PERIOD ===
+router.post("/end-period", verifyToken, authorizeRoles("student"), async (req, res) => {
+  try {
+    const record = new EndPeriod({
+      student: req.user.id,
+      date: req.body.date,
+      summary: req.body.summary,
+    });
+    await record.save();
+    res.status(201).json({ success: true, data: record });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// === PREFERENCES ===
+router.post("/preferences", verifyToken, authorizeRoles("student"), async (req, res) => {
+  try {
+    const record = new Preferences({
+      student: req.user.id,
+      company: req.body.company,
+      field: req.body.field,
+    });
+    await record.save();
+    res.status(201).json({ success: true, data: record });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// === STUDENT INFO ===
+router.post("/info", verifyToken, authorizeRoles("student"), async (req, res) => {
+  try {
+    const record = new StudentInfo({
+      student: req.user.id,
+      address: req.body.address,
+      phone: req.body.phone,
+      emergencyContact: req.body.emergencyContact,
+    });
+    await record.save();
+    res.status(201).json({ success: true, data: record });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
+
 /**
  * === STUDENT DASHBOARD ROUTES ===
-
  */
 
+// Test
 router.get('/test', (req, res) => {
   res.json({ message: 'Student route çalışıyor!' });
 });
-// Dashboard verileri getir (Authentication yok - test için)
-// GET /api/student/dashboard/:studentId
-router.get('/dashboard/:studentId', StudentController.getStudentDashboard);
 
-// Tüm öğrenci alanlarını getir (Authentication yok - test için)
-// GET /api/student/fields/:studentId
-router.get('/fields/:studentId', StudentController.getStudentFields);
-
-// Öğrenci bilgilerini güncelle (Authentication yok - test için)
-// PUT /api/student/:studentId
-router.put('/:studentId', StudentController.updateStudent);
-
-/**
- * === AUTHENTICATED ROUTES ===
- * Bu route'lar authentication gerektirir
- */
-
-// Öğrenci profil bilgileri - Student kendi profilini görebilir
-router.get('/profile', verifyToken, authorizeRoles('student'), async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const studentData = await StudentController.getStudentDashboard({ params: { studentId: userId } }, res);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Belirli bir öğrencinin detaylarını getirme - Department rolü için
-router.get('/detail/:studentId', verifyToken, authorizeRoles('department', 'admin'), async (req, res) => {
-  try {
-    const studentId = req.params.studentId;
-    const studentData = await StudentController.getStudentDashboard({ params: { studentId } }, res);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Tüm öğrencileri listeleme - Department rolü için
-router.get('/list', verifyToken, authorizeRoles('department', 'admin'), StudentController.getStudents);
-
-/**
- * === LEGACY ROUTES (Eski route'lar) ===
- * Gerekirse bunları da kullanabilirsiniz
- */
-
-// Öğrenci detay (admin, supervisor, öğrenci kendi profili)
-router.get('/:id', 
+// Dashboard verileri (Sadece öğrenci kendi dashboard’unu görebilir)
+router.get(
+  '/dashboard/:studentId',
   verifyToken,
-  authorizeRoles('admin','supervisor','student'),
-  async (req, res) => {
-    try {
-      const studentId = req.params.id;
-      const studentData = await StudentController.getStudentDashboard({ params: { studentId } }, res);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  }
+  authorizeRoles('student'),
+  StudentController.getStudentDashboard
 );
 
-// Öğrenci oluşturma (admin)
-router.post('/', 
+// Öğrenci kendi profilini görmek için (kendi id’sini JWT’den alıyoruz)
+router.get(
+  '/profile',
   verifyToken,
-  authorizeRoles('admin'),
-  async (req, res) => {
-    res.status(501).json({ message: 'Bu özellik henüz implement edilmedi' });
-  }
+  authorizeRoles('student'),
+  StudentController.getOwnProfile
+);
+
+// Belirli bir öğrencinin detaylarını getirme - department, admin, supervisor erişebilir
+router.get(
+  '/detail/:studentId',
+  verifyToken,
+  authorizeRoles('department', 'admin', 'supervisor'),
+  StudentController.getStudentDashboard
+);
+
+// Öğrenci bilgilerini güncelleme (öğrenci kendi bilgilerini güncelleyebilir)
+router.put(
+  '/:studentId',
+  verifyToken,
+  authorizeRoles('student'),
+  StudentController.updateStudent
+);
+
+// Tüm öğrencileri listeleme - sadece department ve admin
+router.get(
+  '/list',
+  verifyToken,
+  authorizeRoles('department', 'admin'),
+  StudentController.getStudents
 );
 
 // Öğrenci silme (admin)
-router.delete('/:id', 
+router.delete(
+  '/:studentId',
   verifyToken,
   authorizeRoles('admin'),
   StudentController.deleteStudent
