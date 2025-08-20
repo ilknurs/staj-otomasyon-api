@@ -7,8 +7,20 @@ const cors    = require('cors');
 
 const app = express();
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://staj-otomasyon-frontend.vercel.app'
+];
+
+
 app.use(cors({
-  origin: 'http://localhost:3000',    // React’in çalıştığı adres
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy hatası: İzin verilmeyen origin'));
+    }
+  },
   credentials: true,
 }));
 

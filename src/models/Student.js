@@ -9,6 +9,8 @@ const studentSchema = new mongoose.Schema({
   department:            { type: String, required: true },
   internshipStartDate:   { type: Date, required: true },
   internshipEndDate:     { type: Date, required: true },
+  isActive:              { type: Boolean, default: true }, // Aktif mi?
+  
   company:               { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   companySupervisor:     { type: String, required: true },
   universitySupervisor:  { type: String, required: true },

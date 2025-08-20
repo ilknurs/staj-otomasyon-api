@@ -1,6 +1,4 @@
-// middlewares/roleMiddleware.js
-const jwt = require('jsonwebtoken');
-
+// src/middlewares/roleMiddleware.js
 // Rol kontrolü middleware'i
 const roleMiddleware = (allowedRoles) => {
   return (req, res, next) => {
@@ -17,6 +15,7 @@ const roleMiddleware = (allowedRoles) => {
 };
 
 // JWT doğrulama middleware'i
+const jwt = require('jsonwebtoken');
 const authMiddleware = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
@@ -34,7 +33,7 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// Rol yetkilendirme middleware'i (studentRoutes.js'te kullanılan)
+// Rol yetkilendirme middleware'i
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     const userRole = req.user?.role;
@@ -51,7 +50,7 @@ const authorizeRoles = (...roles) => {
   };
 };
 
-// Token doğrulama middleware'i (studentRoutes.js'te kullanılan)
+// Token doğrulama middleware'i (yalın versiyon)
 const verifyToken = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
