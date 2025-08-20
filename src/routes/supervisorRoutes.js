@@ -10,7 +10,6 @@ router.post('/', verifyToken, authorizeRoles('admin','company'), supervisorContr
 router.put('/:id', verifyToken, authorizeRoles('admin','company'), supervisorController.updateSupervisor);
 router.delete('/:id', verifyToken, authorizeRoles('admin'), supervisorController.deleteSupervisor);
 
-
 // Danışman kendi öğrencilerini görsün
 router.get(
   '/my-students',
@@ -19,7 +18,7 @@ router.get(
   supervisorController.getMyStudents
 );
 
-// Staj onaylarını listele
+// Onay bekleyen staj başvuruları
 router.get(
   '/pending-internships',
   verifyToken,
@@ -27,6 +26,26 @@ router.get(
   supervisorController.getPendingInternships
 );
 
+// ✅ Öğrenci değerlendirmeleri
+router.get(
+  '/evaluations',
+  verifyToken,
+  authorizeRoles('supervisor'),
+  supervisorController.getEvaluations
+);
 
+router.patch(
+  '/evaluations/:id',
+  verifyToken,
+  authorizeRoles('supervisor'),
+  supervisorController.updateEvaluation
+);
 
+// ✅ Raporlar
+router.get(
+  '/reports',
+  verifyToken,
+  authorizeRoles('supervisor'),
+  supervisorController.getReports
+);
 module.exports = router;

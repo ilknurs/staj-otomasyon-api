@@ -1,9 +1,11 @@
-// src/server.js
 require('dotenv').config();
-const express      = require('express');
-const mongoose     = require('mongoose');
-const authRoutes   = require('./routes/authRoutes');
-const cors    = require('cors');
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+
+const authRoutes = require('./routes/authRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const supervisorRoutes = require('./routes/supervisorRoutes'); // ✅ ekle
 
 const app = express();
 
@@ -11,7 +13,6 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://staj-otomasyon-frontend.vercel.app'
 ];
-
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -24,16 +25,13 @@ app.use(cors({
   credentials: true,
 }));
 
-
-
-
 // Body parser
 app.use(express.json());
 
 // Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-
-app.use('/api/student', require('./routes/studentRoutes'));
+app.use('/api/auth', authRoutes);
+app.use('/api/student', studentRoutes);
+app.use('/api/supervisor', supervisorRoutes); // ✅ bunu ekle
 
 // Hata yakalama middleware’leri vs.
 // ...
