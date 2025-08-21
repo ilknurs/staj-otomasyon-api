@@ -31,7 +31,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);
-app.use('/api/supervisor', supervisorRoutes); // ✅ bunu ekle
+app.use('/api/supervisor', supervisorRoutes); 
 
 // Hata yakalama middleware’leri vs.
 // ...
