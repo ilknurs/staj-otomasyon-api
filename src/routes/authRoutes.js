@@ -1,42 +1,29 @@
-// routes/authRoutes.js
 const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middlewares/roleMiddleware');
 const AuthController = require('../controllers/authController');
 
-// Login endpoint'i
+// Login
 router.post('/login', AuthController.login);
 
-// Register endpoint'i
+// Register (öğrenciler)
 router.post('/register', AuthController.register);
 
-// Token doğrulama endpoint'i
+// Verify (kod girişi)
+router.post('/verify', AuthController.verify);
+
+// Admin tarafından kullanıcı oluşturma
+router.post('/admin/create-user', authMiddleware(['admin']), AuthController.createByAdmin);
+
+
+// Token doğrulama
 router.get('/validate', authMiddleware, (req, res) => {
-  try {
-    // Eğer middleware'den geçtiyse token geçerli
-    res.json({ 
-      valid: true, 
-      user: req.user 
-    });
-  } catch (error) {
-    res.status(401).json({ 
-      valid: false, 
-      message: 'Token geçersiz' 
-    });
-  }
+  res.json({ valid: true, user: req.user });
 });
 
-// Logout endpoint'i
+// Logout
 router.post('/logout', authMiddleware, (req, res) => {
-  try {
-    res.json({ 
-      message: 'Başarıyla çıkış yapıldı' 
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      message: 'Çıkış yapılırken hata oluştu' 
-    });
-  }
+  res.json({ message: 'Başarıyla çıkış yapıldı' });
 });
 
 module.exports = router;

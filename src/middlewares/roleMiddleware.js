@@ -1,76 +1,79 @@
 // src/middlewares/roleMiddleware.js
-// Rol kontrolü middleware'i
-const roleMiddleware = (allowedRoles) => {
-  return (req, res, next) => {
-    const role = req.userRole || (req.user && req.user.role);
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-    if (!role) {
-      return res.status(401).json({ message: 'Kimlik doğrulaması gerekli' });
+// Header'dan token çek
+const getTokenFromHeaders = (req) => {
+  if (!req || !req.headers) return null;
+  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+  if (!authHeader) return null;
+  return authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+};
+
+// Token doğrulama + opsiyonel rol kontrolü
+const authMiddleware = (roles = []) => {
+  return async (req, res, next) => {
+    try {
+      const token = getTokenFromHeaders(req);
+      if (!token) {
+        return res.status(401).json({ message: 'Token bulunamadı' });
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id);
+
+      if (!user) {
+        return res.status(401).json({ message: 'Kullanıcı bulunamadı' });
+      }
+
+      // Eğer rol kısıtlaması varsa
+      if (roles.length > 0 && !roles.includes(user.role)) {
+        return res.status(403).json({ message: 'Bu işlem için yetkiniz yok' });
+      }
+
+      req.user = user;
+      next();
+    } catch (error) {
+      console.error('Token verification error:', error);
+      res.status(401).json({ message: 'Geçersiz veya süresi dolmuş token' });
     }
-    if (!allowedRoles.includes(role)) {
-      return res.status(403).json({ message: 'Yetkiniz yok' });
-    }
-    next();
   };
 };
 
-// JWT doğrulama middleware'i
-const jwt = require('jsonwebtoken');
-const authMiddleware = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  
-  if (!token) {
-    return res.status(401).json({ message: 'Token bulunamadı' });
-  }
-  
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    console.error('Token verification error:', error);
-    res.status(401).json({ message: 'Geçersiz token' });
-  }
-};
-
-// Rol yetkilendirme middleware'i
+// Daha sade bir rol kontrol middleware'i
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     const userRole = req.user?.role;
-    
+
     if (!userRole) {
       return res.status(401).json({ message: 'Kimlik doğrulaması gerekli' });
     }
-    
+
     if (!roles.includes(userRole)) {
       return res.status(403).json({ message: 'Bu işlem için yetkiniz yok' });
     }
-    
+
     next();
   };
 };
 
-// Token doğrulama middleware'i (yalın versiyon)
+// Yalın token doğrulama (rol kontrolsüz)
 const verifyToken = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  
-  if (!token) {
-    return res.status(401).json({ message: 'Token bulunamadı' });
-  }
-  
   try {
+    const token = getTokenFromHeaders(req);
+    if (!token) {
+      return res.status(401).json({ message: 'Token bulunamadı' });
+    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
-  } catch (error) {
-    console.error('Token verification error:', error);
-    res.status(401).json({ message: 'Geçersiz token' });
+  } catch (err) {
+    return res.status(401).json({ message: 'Geçersiz veya süresi dolmuş token' });
   }
 };
 
-module.exports = { 
-  roleMiddleware, 
-  authMiddleware, 
-  authorizeRoles, 
-  verifyToken 
+module.exports = {
+  authMiddleware,
+  authorizeRoles,
+  verifyToken,
 };
