@@ -1,12 +1,31 @@
 const asyncHandler = require('express-async-handler');
 const userService = require('../services/userService');
+const sendMail = require("../config/email");
 
 // Normal öğrenci kaydı
 exports.register = asyncHandler(async (req, res) => {
   const userData = await userService.register(req.body);
+
+  // userData içinden mail ve kod al
+  const { email, name, verificationCode } = userData;
+
+  // Mail gönder
+  await sendMail(
+    email,
+    "Hesap Doğrulama Kodu",
+    `Merhaba ${name}, doğrulama kodunuz: ${verificationCode}`
+  );
+
   res.status(201).json({
     success: true,
-    user: userData
+    message: "Kayıt başarılı, doğrulama kodu e-posta adresinize gönderildi.",
+    user: {
+      id: userData._id,
+      name: userData.name,
+      surname: userData.surname,
+      email: userData.email,
+      role: userData.role
+    }
   });
 });
 
@@ -19,7 +38,6 @@ exports.verify = asyncHandler(async (req, res) => {
   }
   res.json({ success: true, message: "Hesabınız doğrulandı" });
 });
-
 
 // Login
 exports.login = asyncHandler(async (req, res) => {

@@ -39,15 +39,14 @@ exports.register = async ({ name, surname, email, password }) => {
   user.verificationCode = code;
   await user.save();
 
-  // Şimdilik sadece log atalım (mail servisi eklenebilir)
-  console.log(`📧 ${email} için doğrulama kodu: ${code}`);
-
+  // ⚠️ Burada return edilen objeye verificationCode da ekledim
   return {
     _id:   user._id,
     name:  user.name,
     surname: user.surname,
     email: user.email,
     role:  user.role,
+    verificationCode: code, 
     message: "Mailinize doğrulama kodu gönderildi"
   };
 };
