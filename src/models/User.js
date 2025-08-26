@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
   createdAt:    { type: Date, default: Date.now }
 });
 
-// ✅ doğru değişken adı kullanılmalı!
+
 userSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.passwordHash);
 };
