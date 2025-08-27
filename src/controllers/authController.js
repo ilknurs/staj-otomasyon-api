@@ -51,11 +51,25 @@ exports.login = asyncHandler(async (req, res) => {
   });
 });
 
-// Admin kullanıcı oluşturma
+// ✅ Admin kullanıcı oluşturma (sadece supervisor, company, department)
 exports.createByAdmin = asyncHandler(async (req, res) => {
+  const { role } = req.body;
+
+  if (!['supervisor', 'company', 'department'].includes(role)) {
+    return res.status(400).json({ success: false, message: "Geçersiz rol" });
+  }
+
   const userData = await userService.createByAdmin(req.body);
+
   res.status(201).json({
     success: true,
-    user: userData
+    message: `${role} başarıyla oluşturuldu`,
+    user: {
+      id: userData._id,
+      name: userData.name,
+      surname: userData.surname,
+      email: userData.email,
+      role: userData.role
+    }
   });
 });
