@@ -1,4 +1,4 @@
-// models/Admin.js
+// src/models/admin.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -30,7 +30,7 @@ const adminSchema = new mongoose.Schema({
   }
 });
 
-// Şifre hashleme
+// Şifre hashleme (save öncesi)
 adminSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
