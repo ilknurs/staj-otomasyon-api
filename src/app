@@ -55,6 +55,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/student', studentRoutes);  // Tekil student routes
 app.use('/api/students', studentRoutes); // Çoğul students routes (opsiyonel)
 app.use("/api/files", require("./routes/fileRoutes"));
+app.use("/api/admins", require("./routes/adminRoutes"));
 
 
 app.use(errorHandler);
